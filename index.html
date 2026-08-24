@@ -268,5 +268,193 @@ function initChart(){
 }
 setInterval(updatePrices, 1500); // تحديث الاسعار كل 1.5 ثانية
 </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://aknqtrydokqiimleieco.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"sb_publishable_WCC7xoZM1Kr-pmSbWfM-rQ_ltaMoFJI";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+
+// ===============================
+// تسجيل الدخول الحقيقي
+// ===============================
+async function login() {
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        alert("يرجى إدخال البريد الإلكتروني وكلمة المرور");
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+    if (error) {
+        alert("فشل تسجيل الدخول: " + error.message);
+        return;
+    }
+
+    await loadStudent(data.user.id);
+}
+
+
+// ===============================
+// جلب بيانات الطالب من قاعدة البيانات
+// ===============================
+async function loadStudent(userId) {
+
+    const { data: student, error } =
+        await supabaseClient
+            .from("students")
+            .select(`
+                id,
+                email,
+                name,
+                balance,
+                level,
+                trades,
+                status,
+                is_admin
+            `)
+            .eq("id", userId)
+            .single();
+
+    if (error) {
+        console.error(error);
+
+        alert(
+            "تم تسجيل الدخول، لكن لم يتم العثور على بيانات الطالب في قاعدة البيانات."
+        );
+
+        await supabaseClient.auth.signOut();
+        return;
+    }
+
+    // الاسم
+    const welcomeTitle =
+        document.querySelector(".welcome h2");
+
+    if (welcomeTitle) {
+        welcomeTitle.textContent =
+            "مرحباً " + (student.name || "بك") + " 👋";
+    }
+
+    // الرصيد
+    document.getElementById("balance").textContent =
+        "$" + Number(student.balance || 0).toLocaleString();
+
+    // المستوى
+    document.getElementById("level").textContent =
+        student.level ?? 1;
+
+    // الصفقات
+    document.getElementById("trades").textContent =
+        student.trades ?? 0;
+
+    // الحالة
+    const statusElement =
+        document.querySelector(".stat-value.green");
+
+    if (statusElement) {
+        statusElement.textContent =
+            student.status || "نشط";
+    }
+
+    // إظهار لوحة الطالب
+    showDashboard();
+
+    console.log("Student loaded:", student);
+}
+
+
+// ===============================
+// تجربة المنصة
+// ===============================
+function demoLogin() {
+
+    document.getElementById("loginPage").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+
+    document.querySelector(".welcome h2").textContent =
+        "مرحباً بك 👋";
+
+    document.getElementById("balance").textContent =
+        "$10,000";
+
+    document.getElementById("level").textContent =
+        "1";
+
+    document.getElementById("trades").textContent =
+        "0";
+}
+
+
+// ===============================
+// إظهار لوحة التحكم
+// ===============================
+function showDashboard() {
+
+    document.getElementById("loginPage").style.display =
+        "none";
+
+    document.getElementById("dashboard").style.display =
+        "block";
+}
+
+
+// ===============================
+// تسجيل الخروج الحقيقي
+// ===============================
+async function logout() {
+
+    const { error } =
+        await supabaseClient.auth.signOut();
+
+    if (error) {
+        alert("حدث خطأ أثناء تسجيل الخروج");
+        return;
+    }
+
+    document.getElementById("dashboard").style.display =
+        "none";
+
+    document.getElementById("loginPage").style.display =
+        "block";
+
+    document.getElementById("email").value = "";
+    document.getElementById("password").value = "";
+}
+
+
+// ===============================
+// إذا كان الطالب مسجل دخول مسبقاً
+// ===============================
+async function checkSession() {
+
+    const { data } =
+        await supabaseClient.auth.getSession();
+
+    if (data.session) {
+        await loadStudent(data.session.user.id);
+    }
+}
+
+
+// تشغيل فحص الجلسة
+checkSession();
+
+</script>
 </body>
 </html>
