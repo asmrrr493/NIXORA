@@ -1,1 +1,272 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIXORA PRO - منصة تداول وهمية</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Tajawal',tahoma}
+body{margin:0;background:#020617;color:#e2e8f0}
+.hidden{display:none}
+.header{background:#0f172a;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;border-bottom:1px solid #1e293b}
+.logo{font-size:20px;font-weight:700;color:#38bdf8}
+.card{background:#0f172a;margin:10px;padding:20px;border-radius:12px;border:1px solid #1e293b;box-shadow:0 0 10px #000}
+button{background:#2563eb;border:none;color:white;padding:12px 15px;border-radius:8px;cursor:pointer;font-weight:bold;transition:0.2s}
+button:hover{opacity:0.8}
+button.danger{background:#dc2626} button.success{background:#16a34a} button.warning{background:#ca8a04}
+input,select{background:#1e293b;border:1px solid #334155;color:white;padding:12px;border-radius:8px;width:100%;margin:8px 0}
+.login-box{max-width:420px;margin:80px auto;background:#0f172a;padding:30px;border-radius:15px;border:1px solid #1e293b}
+.grid{display:flex;flex-wrap:wrap}
+.col{flex:1;min-width:320px}
+.admin{background:#1e1b4b;border:1px solid #4338ca}
+.price{font-size:16px;padding:10px;background:#020617;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;border:1px solid #1e293b}
+.up{color:#22c55e}.down{color:#ef4444}
+.signal{background:#064e3b;padding:12px;border-radius:8px;margin:8px 0;border-right:4px solid #10b981;font-weight:bold}
+.stat{display:flex;justify-content:space-between;font-size:14px;margin:5px 0}
+.portfolio-item{display:flex;justify-content:space-between;background:#1e293b;padding:8px;border-radius:6px;margin:5px 0}
+</style>
+</head>
+<body>
 
+<!-- 5. صفحة تسجيل الدخول والتسجيل -->
+<div id="loginPage" class="login-box">
+  <h2 style="text-align:center;color:#38bdf8">🚀 NIXORA PRO</h2>
+  <p style="text-align:center;font-size:14px">منصة تداول وهمية احترافية</p>
+  <input id="email" placeholder="البريد الالكتروني">
+  <input id="password" type="password" placeholder="كلمة السر">
+  <button onclick="login()" style="width:100%">دخول</button>
+  <button onclick="register()" class="success" style="width:100%;margin-top:10px">تسجيل جديد - 10,000$ وهمي هدية</button>
+  <hr style="border-color:#1e293b;margin:20px 0">
+  <p style="font-size:12px;text-align:center">دخول الادمن: admin@nixora.com / admin123</p>
+</div>
+
+<!-- المنصة الرئيسية -->
+<div id="appPage" class="hidden">
+  <div class="header">
+    <div class="logo">🚀 NIXORA PRO</div>
+    <div>
+      <span>الرصيد: $<b id="balance">0.00</b></span>
+      <button onclick="logout()" style="width:auto;padding:8px 15px;margin-right:10px">خروج</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 4. الشارت والاسعار ولمسات احترافية -->
+    <div class="col card">
+      <h3>📈 الشارت الحي + الاسعار</h3>
+      <canvas id="chart"></canvas>
+      <div id="prices" style="margin-top:15px"></div>
+    </div>
+
+    <!-- 2. سحب + إيداع وهمي -->
+    <div class="col card">
+      <h3>💰 المحفظة - سحب وايداع ustd</h3>
+      <input id="amount" type="number" placeholder="ادخل المبلغ بالدولار">
+      <div style="display:flex;gap:10px">
+        <button onclick="wallet('deposit')" class="success" style="flex:1">ايداع ustd</button>
+        <button onclick="wallet('withdraw')" class="danger" style="flex:1">سحب ustd</button>
+      </div>
+      <h4>محفظة العملات:</h4>
+      <div id="portfolio">فارغة</div>
+      <div class="stat"><span>اجمالي الربح/الخسارة:</span><span id="pnl" class="up">$0.00</span></div>
+    </div>
+
+    <!-- التداول -->
+    <div class="col card">
+      <h3>📊 التداول الفوري</h3>
+      <select id="symbol"></select>
+      <input id="trade_amount" type="number" placeholder="ادخل الكمية">
+      <div style="display:flex;gap:10px">
+        <button onclick="trade('buy')" class="success" style="flex:1">شراء LONG</button>
+        <button onclick="trade('sell')" class="danger" style="flex:1">بيع SHORT</button>
+      </div>
+    </div>
+
+    <!-- 3. خانة كود الصفقة -->
+    <div class="col card">
+      <h3>🎯 غرفة اشارات الادمن</h3>
+      <div id="signals" style="max-height:300px;overflow-y:auto"></div>
+    </div>
+
+    <!-- 6. لوحة تحكم العضو -->
+    <div class="col card">
+      <h3>⚙️ لوحة تحكم العضو</h3>
+      <p>البريد: <b id="user_email"></b></p>
+      <input id="old_pass" type="password" placeholder="كلمة السر القديمة">
+      <input id="new_pass" type="password" placeholder="كلمة السر الجديدة">
+      <button onclick="changePass()" class="warning" style="width:100%">تغيير كلمة السر</button>
+    </div>
+
+    <!-- 1. لوحة تحكم الادمن - التحكم بكلشي -->
+    <div id="adminPanel" class="col card admin hidden">
+      <h3>👑 لوحة تحكم الادمن الكاملة</h3>
+      
+      <h4>3. ارسال كود الصفقة للكل</h4>
+      <input id="signal_code" placeholder="مثال: BTC شراء 65000 الهدف 67000 وقف 64000">
+      <button onclick="sendSignal()" class="success" style="width:100%">بث الاشارة للاعضاء</button>
+
+      <h4>التحكم الكامل بالاسعار</h4>
+      <select id="admin_symbol"></select>
+      <input id="admin_price" type="number" placeholder="حدد السعر الجديد">
+      <button onclick="setPrice()" class="warning" style="width:100%">فرض السعر</button>
+
+      <h4>التحكم بحسابات الاعضاء</h4>
+      <input id="admin_email" placeholder="ايميل العضو">
+      <input id="admin_add" type="number" placeholder="المبلغ للشحن">
+      <button onclick="addBalance()" class="success" style="width:100%">شحن رصيد العضو</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let db = JSON.parse(localStorage.getItem('nixora_db_v2')) || {
+  users: {"admin@nixora.com": {password: "admin123", balance: 1000000, portfolio: {}, is_admin: true, pnl:0}},
+  market: {BTC: 65432.12, ETH: 3521.88, SOL: 152.45, XRP: 0.5421, BNB: 605.30, DOGE: 0.125},
+  signals: []
+};
+let currentUser = null; let chart;
+
+function saveDB(){ localStorage.setItem('nixora_db_v2', JSON.stringify(db)) }
+
+// 5. تسجيل ودخول
+function login(){
+  let e = document.getElementById('email').value;
+  let p = document.getElementById('password').value;
+  if(db.users[e] && db.users[e].password == p){currentUser = e; showApp();} 
+  else alert('❌ البريد او كلمة السر خطأ')
+}
+function register(){
+  let e = document.getElementById('email').value;
+  let p = document.getElementById('password').value;
+  if(!e||!p)return alert('ادخل البريد وكلمة السر');
+  if(db.users[e]) return alert('الايميل مستخدم');
+  db.users[e] = {password: p, balance: 10000, portfolio: {}, is_admin: false, pnl:0};
+  saveDB(); currentUser = e; showApp();
+}
+function logout(){ currentUser = null; document.getElementById('appPage').classList.add('hidden'); document.getElementById('loginPage').classList.remove('hidden') }
+function showApp(){
+  document.getElementById('loginPage').classList.add('hidden'); 
+  document.getElementById('appPage').classList.remove('hidden');
+  document.getElementById('user_email').innerText = currentUser;
+  if(db.users[currentUser].is_admin) document.getElementById('adminPanel').classList.remove('hidden');
+  updateUI(); initChart();
+}
+
+// 4. تحديث الاسعار والشارت كل ثانية ولمسات
+function updatePrices(){
+  for(let c in db.market){
+    let change = (Math.random() - 0.5) * 0.025;
+    db.market[c] *= (1 + change);
+  }
+  saveDB(); updateUI();
+}
+
+function updateUI(){
+  let u = db.users[currentUser];
+  document.getElementById('balance').innerText = u.balance.toLocaleString('en', {minimumFractionDigits:2});
+
+  // الاسعار
+  let pHtml = ''; let sHtml = '';
+  for(let c in db.market){
+    let prev = parseFloat(localStorage.getItem('prev_'+c)) || db.market[c];
+    let cls = db.market[c] > prev? 'up' : 'down';
+    let change = ((db.market[c]-prev)/prev*100).toFixed(2);
+    pHtml += `<div class="price ${cls}"><b>${c}</b> <span>$${db.market[c].toFixed(2)} <small>(${change}%)</small></span></div>`;
+    sHtml += `<option>${c}</option>`;
+    localStorage.setItem('prev_'+c, db.market[c]);
+  }
+  document.getElementById('prices').innerHTML = pHtml;
+  document.getElementById('symbol').innerHTML = sHtml;
+  document.getElementById('admin_symbol').innerHTML = sHtml;
+
+  // المحفظة
+  let portHtml = ''; let totalValue = 0;
+  for(let c in u.portfolio){ 
+    let value = u.portfolio[c] * db.market[c];
+    totalValue += value;
+    portHtml += `<div class="portfolio-item"><span>${c}: ${u.portfolio[c].toFixed(4)}</span><span>$${value.toFixed(2)}</span></div>` 
+  }
+  document.getElementById('portfolio').innerHTML = portHtml || 'لا توجد عملات';
+  document.getElementById('pnl').innerText = '$' + (totalValue + u.balance - 10000).toFixed(2);
+
+  // الاشارات
+  let sigHtml = '';
+  db.signals.slice().reverse().forEach(s => sigHtml += `<div class="signal">🕒 ${s.time}<br>${s.code}</div>`)
+  document.getElementById('signals').innerHTML = sigHtml || '<p style="text-align:center">لا توجد اشارات حاليا</p>';
+}
+
+// التداول
+function trade(type){
+  let u = db.users[currentUser];
+  let s = document.getElementById('symbol').value;
+  let a = parseFloat(document.getElementById('trade_amount').value);
+  if(!a || a<=0)return alert('ادخل كمية صحيحة');
+  let price = db.market[s]; let cost = a * price;
+  if(type == 'buy' && u.balance >= cost){
+    u.balance -= cost; u.portfolio[s] = (u.portfolio[s] || 0) + a;
+  } else if(type == 'sell' && (u.portfolio[s] || 0) >= a){
+    u.balance += cost; u.portfolio[s] -= a;
+  } else return alert('❌ رصيد غير كافي او كمية اكبر من اللي عندك');
+  saveDB(); updateUI();
+}
+
+// 2. سحب وايداع وهمي
+function wallet(type){
+  let a = parseFloat(document.getElementById('amount').value);
+  if(!a || a<=0)return alert('ادخل مبلغ صحيح');
+  let u = db.users[currentUser];
+  if(type == 'deposit') u.balance += a;
+  else if(type == 'withdraw' && u.balance >= a) u.balance -= a;
+  else return alert('❌ رصيد غير كافي للسحب');
+  saveDB(); updateUI();
+}
+
+// 6. تغيير كلمة السر
+function changePass(){
+  let u = db.users[currentUser];
+  if(u.password == document.getElementById('old_pass').value){
+    u.password = document.getElementById('new_pass').value; saveDB(); alert('✅ تم تغيير كلمة السر');
+  } else alert('❌ كلمة السر القديمة غلط');
+}
+
+// 1. لوحة الادمن الكاملة + 3. كود الصفقة
+function sendSignal(){
+  let code=document.getElementById('signal_code').value;
+  if(!code)return alert('اكتب كود الصفقة');
+  db.signals.push({code: code, time: new Date().toLocaleTimeString('ar-EG')});
+  saveDB(); updateUI();document.getElementById('signal_code').value='';alert('✅ تم ارسال الاشارة للكل');
+}
+function setPrice(){
+  let price=parseFloat(document.getElementById('admin_price').value);
+  if(!price)return alert('ادخل سعر');
+  db.market[document.getElementById('admin_symbol').value] = price;
+  saveDB(); updateUI();alert('✅ تم تغيير السعر');
+}
+function addBalance(){
+  let email=document.getElementById('admin_email').value;
+  let amount=parseFloat(document.getElementById('admin_add').value);
+  if(db.users[email]){ db.users[email].balance += amount; saveDB(); alert('✅ تم شحن '+amount+'$ لـ '+email) }
+  else alert('الايميل غير موجود');
+}
+
+// الشارت الاحترافي
+function initChart(){
+  const ctx = document.getElementById('chart');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {labels: [], datasets: [{label: 'BTC USD', data: [], borderColor: '#f59e0b',backgroundColor:'rgba(245,158,11,0.2)',tension:0.4,fill:true}]},
+    options: {responsive: true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'white'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8'}}}}
+  });
+  setInterval(() => {
+    chart.data.labels.push(new Date().toLocaleTimeString('ar-EG'));
+    chart.data.datasets[0].data.push(db.market.BTC);
+    if(chart.data.labels.length > 30) {chart.data.labels.shift(); chart.data.datasets[0].data.shift();}
+    chart.update('none');
+  }, 1000);
+}
+setInterval(updatePrices, 1500); // تحديث الاسعار كل 1.5 ثانية
+</script>
+</body>
+</html>
